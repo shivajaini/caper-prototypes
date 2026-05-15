@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shopping List – Review</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #108910;
+      --gray-80: #242529;
+      --gray-60: #56595e;
+      --gray-20: #e8e9eb;
+      --gray-10: #f6f7f8;
+      --yellow: #ffdc23;
+      --white: #ffffff;
+      --font-title: 'Helvetica Neue', Arial, sans-serif;
+      --font-body: 'Helvetica Neue', Arial, sans-serif;
+      --radius-card: 16px;
+      --radius-round: 999px;
+    }
+
+    html {
+      height: 100%;
+    }
+    body {
+      background: #c8cace;
+      font-family: var(--font-body);
+      color: var(--gray-80);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tablet-frame {
+      background: #1c1c1e;
+      border-radius: 36px;
+      padding: 18px;
+      position: relative;
+      box-shadow:
+        0 50px 120px rgba(0,0,0,0.55),
+        inset 0 0 0 1px rgba(255,255,255,0.09),
+        0 0 0 1px rgba(0,0,0,0.7);
+      flex-shrink: 0;
+    }
+
+    /* front camera */
+    .tablet-frame::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 9px;
+      transform: translateY(-50%);
+      width: 9px;
+      height: 9px;
+      background: #2c2c30;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1.5px #3a3a3e, 0 0 0 3px rgba(255,255,255,0.03);
+    }
+
+    /* volume buttons */
+    .tablet-frame::after {
+      content: '';
+      position: absolute;
+      left: -4px;
+      top: 140px;
+      width: 4px;
+      height: 56px;
+      background: #2a2a2e;
+      border-radius: 2px 0 0 2px;
+      box-shadow: 0 72px 0 #2a2a2e;
+    }
+
+    .tablet-screen {
+      width: 1280px;
+      height: 780px;
+      background: var(--white);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--gray-80);
+      color: var(--white);
+      font-size: 15px;
+      font-weight: 500;
+      padding: 12px 20px;
+      border-radius: 24px;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 200;
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ─── STICKY PAGE HEADER ─── */
+    .page-header {
+      flex-shrink: 0;
+      height: 96px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-20);
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .page-header__nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      position: relative;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--gray-80);
+      width: 268px;
+    }
+
+    .back-btn svg { flex-shrink: 0; }
+
+    .page-header__title {
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 50px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .done-btn {
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-round);
+      height: 50px;
+      min-width: 120px;
+      padding: 0 24px;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* ─── CONTENT AREA ─── */
+    .content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      gap: 29px;
+      padding-left: 32px;
+    }
+
+    /* ─── LEFT PANEL ─── */
+    .left-panel {
+      width: 413px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .left-panel__header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0 12px;
+      background: var(--white);
+    }
+
+    .left-panel__count {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 28px;
+    }
+
+    .add-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      border: 2px solid var(--gray-20);
+      border-radius: var(--radius-round);
+      height: 48px;
+      min-width: 120px;
+      padding: 0 24px;
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--gray-80);
+    }
+
+    .left-panel__list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 16px;
+    }
+
+    .left-panel__list::-webkit-scrollbar { width: 4px; }
+    .left-panel__list::-webkit-scrollbar-thumb { background: var(--gray-20); border-radius: 2px; }
+
+    /* ─── LIST ITEM ─── */
+    .list-item {
+      background: var(--gray-10);
+      border: 1px solid var(--gray-10);
+      border-radius: var(--radius-card);
+      padding: 8px 16px;
+      min-height: 64px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .list-item.checked {
+      opacity: 0.7;
+    }
+
+    .list-item__left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .list-item__checkbox {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+    }
+
+    .checkbox-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .list-item__name {
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 28px;
+      color: var(--gray-80);
+      overflow: hidden;
+    }
+
+    .list-item.checked .list-item__name {
+      text-decoration: line-through;
+      color: var(--gray-60);
+    }
+
+    .list-item__edit {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-60);
+      display: flex;
+      align-items: center;
+    }
+
+    /* ─── RIGHT PANEL ─── */
+    .right-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 32px 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .right-panel::-webkit-scrollbar { width: 4px; }
+    .right-panel::-webkit-scrollbar-thumb { background: var(--gray-20); border-radius: 2px; }
+
+    /* ─── SECTION TITLE ─── */
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 28px;
+      color: var(--gray-80);
+      margin-bottom: 8px;
+    }
+
+    /* ─── STAPLES CARD ─── */
+    .staples-wrapper {
+      display: block;
+      flex-shrink: 0;
+      background: var(--white);
+      border: 1px solid var(--gray-20);
+      border-radius: 24px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .staples-card {
+      padding: 20px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .staples-images {
+      display: flex;
+      align-items: center;
+      position: relative;
+      width: 190px;
+      height: 72px;
+      flex-shrink: 0;
+      overflow: hidden;
+      transition: width 320ms cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 200ms ease;
+    }
+
+    .staples-img {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: 1px solid var(--gray-20);
+      object-fit: cover;
+      position: absolute;
+      top: 5px;
+    }
+
+    .staples-img:nth-child(1) { left: 0; z-index: 3; }
+    .staples-img:nth-child(2) { left: 56px; z-index: 2; }
+    .staples-img-more {
+      position: absolute;
+      left: 112px;
+      top: 5px;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      border: 1px solid var(--gray-20);
+      overflow: hidden;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .staples-img-more img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.4);
+    }
+    .staples-img-more span {
+      position: absolute;
+      color: white;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .staples-text {
+      flex: 1;
+      font-size: 20px;
+      font-weight: 400;
+      line-height: 28px;
+      color: var(--gray-60);
+    }
+
+    .staples-text strong {
+      font-weight: 700;
+      color: var(--gray-80);
+    }
+
+    .update-list-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      border: 2px solid var(--gray-20);
+      border-radius: var(--radius-round);
+      height: 48px;
+      padding: 0 24px;
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--gray-80);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .chevron-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-60);
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      padding: 4px;
+    }
+    .chevron-btn svg {
+      transition: transform 260ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .staples-wrapper.expanded .chevron-btn svg {
+      transform: rotate(180deg);
+    }
+    .staples-wrapper.expanded .staples-images {
+      width: 0;
+    }
+
+    /* Expanded match list */
+    .staples-matches {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 380ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .staples-wrapper.expanded .staples-matches {
+      max-height: 1200px;
+    }
+    .staples-matches-inner {
+      border-top: 1px solid var(--gray-20);
+      margin: 0 16px;
+      padding: 8px 0 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Individual match row — inset, no border of its own */
+    .match-img {
+      width: 72px;
+      height: 72px;
+      border-radius: 12px;
+      object-fit: contain;
+      flex-shrink: 0;
+      border: 1px solid var(--gray-20);
+      background: var(--gray-10);
+      padding: 4px;
+    }
+
+    .match-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-20);
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    .match-card:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    /* opacity + transform driven entirely by JS FLIP logic */
+    .match-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .match-badge {
+      display: inline-flex;
+      align-items: center;
+      background: #108910;
+      color: white;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+      padding: 0 6px;
+      border-radius: 3px;
+      width: fit-content;
+    }
+    .match-price-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .match-name {
+      font-size: 20px;
+      color: var(--gray-60);
+      line-height: 28px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .match-name strong {
+      color: var(--gray-80);
+      font-weight: 700;
+    }
+    .match-size {
+      font-size: 16px;
+      color: var(--gray-60);
+      line-height: 24px;
+    }
+    .match-update-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      border: 2px solid var(--gray-20);
+      border-radius: var(--radius-round);
+      height: 48px;
+      padding: 0 24px;
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--gray-80);
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+    .match-update-btn:hover { background: var(--gray-10); }
+    .match-update-btn.updated,
+    .update-list-btn.updated {
+      background: var(--white);
+      color: var(--gray-80);
+      border-color: var(--gray-20);
+      pointer-events: none;
+    }
+
+    /* ─── MATCH CHECKBOX ─── */
+    .match-checkbox {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .match-checkbox .cb-box { fill: var(--gray-80); }
+    .match-checkbox .cb-check { stroke: white; }
+    .match-checkbox.unchecked .cb-box { fill: none; stroke: var(--gray-80); stroke-width: 2; }
+    .match-checkbox.unchecked .cb-check { display: none; }
+
+    /* ─── LIST ITEM WITH PRODUCT IMAGE ─── */
+    .list-item__product-img {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      object-fit: contain;
+      flex-shrink: 0;
+      border: 1px solid var(--gray-20);
+      background: var(--white);
+      padding: 3px;
+    }
+    .list-item__text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .list-item__qty {
+      font-size: 16px;
+      color: var(--gray-60);
+      line-height: 20px;
+    }
+    .list-item__match .list-item__name { font-weight: 400; }
+
+    /* ─── LIST ITEM MATCH SUB-CARD ─── */
+    .list-item--matched {
+      flex-wrap: wrap;
+      align-items: flex-start;
+      padding: 12px 16px;
+    }
+    .list-item--matched .list-item__left { padding-top: 4px; }
+    .list-item__match {
+      width: 100%;
+      margin-top: 10px;
+      background: var(--white);
+      border: 1px solid var(--gray-20);
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .list-item__match-img {
+      width: 72px;
+      height: 72px;
+      border-radius: 8px;
+      object-fit: contain;
+      flex-shrink: 0;
+      border: 1px solid var(--gray-20);
+      background: var(--gray-10);
+      padding: 4px;
+    }
+    .list-item__match-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    /* ─── FORGOTTEN SECTION ─── */
+    .forgotten-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-top: 8px;
+    }
+
+    /* ─── PRODUCT CARD ─── */
+    .product-card {
+      background: var(--white);
+      border: 1px solid var(--gray-20);
+      border-radius: 24px;
+      height: 136px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .product-img {
+      width: 72px;
+      height: 72px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .product-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .product-price-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .price-badge {
+      background: var(--yellow);
+      padding: 2px 4px;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 28px;
+      color: var(--gray-80);
+    }
+
+    .price-slash {
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--gray-60);
+      text-decoration: line-through;
+    }
+
+    .product-name {
+      font-size: 20px;
+      font-weight: 400;
+      line-height: 28px;
+      color: var(--gray-60);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .product-size {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+      color: var(--gray-60);
+    }
+
+    .add-product-btn {
+      width: 48px;
+      height: 48px;
+      background: var(--green);
+      border: none;
+      border-radius: var(--radius-round);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 150ms;
+    }
+    .add-product-btn svg { color: white; }
+    .product-card {
+      cursor: pointer;
+      transition: background 120ms, border-color 120ms;
+    }
+    .product-card:active { background: var(--gray-10); }
+    .product-card.added {
+      border-color: var(--green);
+      background: #f0faf0;
+    }
+    .product-card.added .add-product-btn { background: #0a6b0a; }
+
+    /* ─── BOTTOM SHEET OVERLAY ─── */
+    .sheet-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 180ms ease;
+    }
+    .sheet-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sheet-scrim {
+      position: absolute;
+      inset: 0;
+      background: rgba(36,37,41,0.55);
+    }
+
+    /* ─── SHEET PANEL ─── */
+    .sheet {
+      position: relative;
+      background: var(--white);
+      border-radius: 24px 24px 0 0;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 220ms cubic-bezier(0.32,0.72,0,1);
+    }
+    .sheet-overlay.open .sheet {
+      transform: translateY(0);
+    }
+
+    /* pull bar */
+    .sheet-pull-bar {
+      display: flex;
+      justify-content: center;
+      padding: 10px 0 6px;
+      flex-shrink: 0;
+    }
+    .sheet-pull {
+      width: 100px;
+      height: 5px;
+      background: #c8cacd;
+      border-radius: 999px;
+    }
+
+    /* header */
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      height: 56px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--gray-20);
+    }
+    .sheet-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gray-80);
+    }
+    .sheet-close {
+      position: absolute;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-80);
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* input row */
+    .sheet-input-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 40px;
+      flex-shrink: 0;
+    }
+    .sheet-text-input {
+      flex: 1;
+      height: 72px;
+      border: 2px solid var(--green);
+      border-radius: 999px;
+      padding: 0 28px;
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--gray-80);
+      outline: none;
+      font-family: inherit;
+      background: var(--white);
+    }
+    .sheet-text-input:focus {
+      border-color: var(--green);
+    }
+    .sheet-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: var(--green);
+      border-radius: 999px;
+      height: 72px;
+      padding: 0 10px;
+      flex-shrink: 0;
+    }
+    .stepper-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 28px;
+      font-weight: 300;
+      cursor: pointer;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    .stepper-btn:hover { background: rgba(255,255,255,0.15); }
+    .stepper-count {
+      color: white;
+      font-size: 24px;
+      font-weight: 700;
+      min-width: 36px;
+      text-align: center;
+    }
+    .sheet-unit {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--green);
+      border-radius: 999px;
+      height: 72px;
+      padding: 0 24px;
+      color: white;
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      border: none;
+    }
+
+    .sheet-unit-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .unit-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      background: var(--white);
+      border: 1px solid var(--gray-20);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+      overflow-y: auto;
+      max-height: 340px;
+      display: none;
+      flex-direction: column;
+      min-width: 160px;
+      z-index: 300;
+    }
+    .unit-dropdown.open { display: flex; }
+    .unit-dropdown-item {
+      padding: 14px 20px;
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--gray-80);
+      cursor: pointer;
+      white-space: nowrap;
+      border: none;
+      background: none;
+      text-align: left;
+      font-family: inherit;
+    }
+    .unit-dropdown-item:hover { background: var(--gray-10); }
+    .unit-dropdown-item.selected { color: var(--green); font-weight: 700; }
+    .unit-dropdown-divider {
+      height: 1px;
+      background: var(--gray-20);
+      margin: 0;
+    }
+
+    .sheet-delete-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 2px solid var(--gray-20);
+      background: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--gray-60);
+    }
+    .sheet-delete-btn:hover { background: var(--gray-10); }
+
+    /* suggestions */
+    .sheet-suggestions {
+      display: none;
+      align-items: center;
+      padding: 0 24px;
+      height: 52px;
+      gap: 8px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--gray-20);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .sheet-suggestions::-webkit-scrollbar { display: none; }
+    .sheet.unit-picker-open .sheet-suggestions { display: flex; }
+    .sheet.unit-picker-open .sheet-unit { background: #0a6b0a; }
+    .suggestion-chip {
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--gray-60);
+      background: var(--gray-10);
+      border: 1.5px solid var(--gray-20);
+      border-radius: 999px;
+      padding: 6px 18px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 120ms, color 120ms, border-color 120ms;
+    }
+    .suggestion-chip.selected {
+      background: #e8f5e8;
+      color: var(--green);
+      border-color: var(--green);
+      font-weight: 600;
+    }
+
+    /* ─── KEYBOARD ─── */
+    .sheet-keyboard {
+      flex: 1;
+      background: #d1d3d8;
+      display: flex;
+      align-items: flex-start; /* all sections anchor to top; no vertical stretch */
+      padding: 10px 8px 8px;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    /* QWERTY side */
+    .kbd-qwerty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    /* Row 1: flush left→right (backspace fills the right edge) */
+    .kbd-row { display: flex; gap: 6px; }
+    .kbd-row-1 { justify-content: flex-start; }
+    .kbd-row-2 { justify-content: center; }
+    .kbd-row-3 { justify-content: center; }
+
+    /* All letter keys: fixed width, no grow */
+    .kbd-key {
+      flex: 0 0 75px;
+      height: 62px;
+      background: white;
+      border: none;
+      border-radius: 9px;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--gray-80);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.35);
+      font-family: inherit;
+      transition: background 80ms;
+    }
+    .kbd-key:active { background: #d0d3d9; }
+
+    /* Backspace fills remaining space in row 1 */
+    .kbd-key.backspace {
+      flex: 1 1 auto;
+      background: #8e9099;
+    }
+    .kbd-key.backspace:active { background: #72767e; }
+
+    /* Bottom row: spacebar + Save */
+    .kbd-row-space {
+      display: flex;
+      width: 100%;   /* explicit full-width inside the flex-column parent */
+      gap: 6px;
+    }
+    .kbd-space {
+      flex: 1;
+      height: 64px;
+      background: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--gray-60);
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.35);
+      transition: background 80ms;
+    }
+    .kbd-space:active { background: #d0d3d9; }
+    .kbd-save {
+      flex: 0 0 220px;
+      height: 64px;
+      background: #1c1c1e;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 22px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.35);
+      transition: background 80ms;
+    }
+    .kbd-save:active { background: #3a3a3c; }
+
+    /* Dismiss button */
+    .kbd-dismiss-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 60px;
+      flex-shrink: 0;
+    }
+    .kbd-dismiss {
+      background: white;
+      border: none;
+      border-radius: 9px;
+      width: 50px;
+      height: 62px;   /* same height as a letter key */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.35);
+      color: var(--gray-80);
+    }
+    .kbd-dismiss:active { background: #d0d3d9; }
+
+    /* Numpad — rows fixed to exactly 62px so they match letter keys */
+    .kbd-numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(4, 62px);  /* fixed: same as letter keys */
+      gap: 10px;
+      width: 248px;
+      flex-shrink: 0;
+    }
+    .kbd-num {
+      background: white;
+      border: none;
+      border-radius: 9px;
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--gray-80);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.35);
+      font-family: inherit;
+      transition: background 80ms;
+    }
+    .kbd-num:active { background: #d0d3d9; }
+    .kbd-num.zero { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+  <div class="tablet-frame">
+  <div class="tablet-screen">
+
+  <!-- STICKY PAGE HEADER -->
+  <header class="page-header">
+    <nav class="page-header__nav">
+      <button class="back-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 18L9 12L15 6" stroke="#242529" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </button>
+      <h1 class="page-header__title">Review your list</h1>
+      <button class="done-btn">Done</button>
+    </nav>
+  </header>
+
+  <!-- CONTENT: LEFT + RIGHT PANELS -->
+  <div class="content">
+
+    <!-- LEFT PANEL: Shopping List -->
+    <div class="left-panel">
+      <div class="left-panel__header">
+        <span class="left-panel__count">17 items</span>
+        <button class="add-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19M5 12H19" stroke="#242529" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          Add
+        </button>
+      </div>
+
+      <div class="left-panel__list">
+        <!-- Unchecked items (edit icon) -->
+        <div class="list-item">
+          <div class="list-item__left">
+            <span class="list-item__name">milk</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="list-item">
+          <div class="list-item__left">
+            <span class="list-item__name">fage yogurt</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item">
+          <div class="list-item__left">
+            <span class="list-item__name">berries</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item">
+          <div class="list-item__left">
+            <span class="list-item__name">croissants</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item">
+          <div class="list-item__left">
+            <span class="list-item__name">almond butter</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item">
+          <div class="list-item__left">
+            <span class="list-item__name">tea</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">a protein of choice (tofu, chicken, etc)</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <!-- Checked items (checkbox + edit icon) -->
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">water</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">bread</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">chips</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">cookies</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">gatorade</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">a pint of Haggen Daz Ice cream or Ben Jerry's</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">1/2 lb of Low sodium ham (Boars head) Deli</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">chicken</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">cheese</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="list-item" style="min-height:96px;">
+          <div class="list-item__left">
+            <span class="list-item__name">rice</span>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Product Suggestions -->
+    <div class="right-panel">
+
+      <!-- Your staples, pre-matched -->
+      <p class="section-title">Your staples, pre-matched</p>
+
+      <div class="staples-wrapper" id="staplesWrapper">
+        <div class="staples-card" id="staplesCard">
+          <div class="staples-images">
+            <img class="staples-img" src="https://www.figma.com/api/mcp/asset/eed3f398-1026-4cf3-b02d-0c08f19c7c27" alt="milk" />
+            <img class="staples-img" src="https://www.figma.com/api/mcp/asset/8182e1ee-32ce-4bbc-86d6-0ce096046a40" alt="yogurt" />
+            <div class="staples-img-more">
+              <img src="https://www.figma.com/api/mcp/asset/abdd8f46-0119-4b84-8c12-24de1a8c5d23" alt="more" />
+              <span>+3</span>
+            </div>
+          </div>
+          <p class="staples-text">
+            Recognized <strong>6 of your usuals</strong> - <strong>milk, yogurt, tea bags</strong> &amp; 3 more. Swap in one tap.
+          </p>
+          <button class="update-list-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M1 4v6h6M23 20v-6h-6" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Update list
+          </button>
+          <button class="chevron-btn" aria-label="Expand">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Expanded individual matches -->
+        <div class="staples-matches" id="staplesMatches">
+          <div class="staples-matches-inner">
+
+            <div class="match-card">
+              <img class="match-img" src="Documents/Caper/features/list_import_review_items/assets/horizon_organic_milk.jpg" alt="Milk" />
+              <div class="match-info">
+                <span class="match-badge">Matches your list item</span>
+                <div class="match-price-row">
+                  <span class="price-badge">$3.99</span>
+                  <span class="price-slash">$4.99</span>
+                </div>
+                <p class="match-name">Horizon Organic <strong>Milk</strong></p>
+                <p class="match-size">1 gal</p>
+              </div>
+              <button class="match-update-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M1 4v6h6M23 20v-6h-6" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Update list
+              </button>
+            </div>
+
+            <div class="match-card">
+              <img class="match-img" src="https://www.figma.com/api/mcp/asset/8182e1ee-32ce-4bbc-86d6-0ce096046a40" alt="Yogurt" />
+              <div class="match-info">
+                <span class="match-badge">Matches your list item</span>
+                <div class="match-price-row">
+                  <span class="price-badge">$5.49</span>
+                  <span class="price-slash">$6.99</span>
+                </div>
+                <p class="match-name">Fage Total 0% <strong>Yogurt</strong></p>
+                <p class="match-size">32 oz</p>
+              </div>
+              <button class="match-update-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M1 4v6h6M23 20v-6h-6" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Update list
+              </button>
+            </div>
+
+            <div class="match-card">
+              <img class="match-img" src="https://www.figma.com/api/mcp/asset/abdd8f46-0119-4b84-8c12-24de1a8c5d23" alt="Tea bags" />
+              <div class="match-info">
+                <span class="match-badge">Matches your list item</span>
+                <div class="match-price-row">
+                  <span class="price-badge">$4.29</span>
+                  <span class="price-slash">$5.49</span>
+                </div>
+                <p class="match-name">Twinings English Breakfast <strong>Tea Bags</strong></p>
+                <p class="match-size">50 ct</p>
+              </div>
+              <button class="match-update-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M1 4v6h6M23 20v-6h-6" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Update list
+              </button>
+            </div>
+
+            <div class="match-card">
+              <img class="match-img" src="Documents/Caper/features/list_import_review_items/assets/kerrygold_butter.jpg" alt="Butter" />
+              <div class="match-info">
+                <span class="match-badge">Matches your list item</span>
+                <div class="match-price-row">
+                  <span class="price-badge">$6.99</span>
+                  <span class="price-slash">$8.49</span>
+                </div>
+                <p class="match-name">Kerrygold Pure Irish <strong>Butter</strong></p>
+                <p class="match-size">8 oz</p>
+              </div>
+              <button class="match-update-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M1 4v6h6M23 20v-6h-6" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Update list
+              </button>
+            </div>
+
+            <div class="match-card">
+              <img class="match-img" src="Documents/Caper/features/list_import_review_items/assets/vital_farms_pasture_raised_eggs.jpg" alt="Eggs" />
+              <div class="match-info">
+                <span class="match-badge">Matches your list item</span>
+                <div class="match-price-row">
+                  <span class="price-badge">$5.99</span>
+                  <span class="price-slash">$7.29</span>
+                </div>
+                <p class="match-name">Vital Farms Pasture-Raised <strong>Eggs</strong></p>
+                <p class="match-size">12 ct</p>
+              </div>
+              <button class="match-update-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M1 4v6h6M23 20v-6h-6" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Update list
+              </button>
+            </div>
+
+            <div class="match-card">
+              <img class="match-img" src="Documents/Caper/features/list_import_review_items/assets/daves_killer_bread.jpg" alt="Bread" />
+              <div class="match-info">
+                <span class="match-badge">Matches your list item</span>
+                <div class="match-price-row">
+                  <span class="price-badge">$5.49</span>
+                  <span class="price-slash">$6.99</span>
+                </div>
+                <p class="match-name">Dave's Killer <strong>Bread</strong>, 21 Whole Grains</p>
+                <p class="match-size">27 oz</p>
+              </div>
+              <button class="match-update-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M1 4v6h6M23 20v-6h-6" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15" stroke="#242529" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Update list
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Things you might have forgotten -->
+      <p class="section-title" style="margin-top:16px;">Things you might have forgotten</p>
+
+      <div class="forgotten-section">
+
+        <div class="product-card">
+          <img class="product-img" src="https://www.figma.com/api/mcp/asset/74f8d92b-4091-4fb2-b2ec-8796b8e2f5be" alt="Goya Black Beans" />
+          <div class="product-info">
+            <div class="product-price-row">
+              <span class="price-badge">$3.99</span>
+              <span class="price-slash">$4.99</span>
+            </div>
+            <p class="product-name">Goya Black Beans, Canned</p>
+            <p class="product-size">12 oz</p>
+          </div>
+          <button class="add-product-btn" aria-label="Add to cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="product-card">
+          <img class="product-img" src="https://www.figma.com/api/mcp/asset/90b53532-bfd1-4bba-b170-978590a39450" alt="Gold Medal Flour" />
+          <div class="product-info">
+            <div class="product-price-row">
+              <span class="price-badge">$3.99</span>
+              <span class="price-slash">$4.99</span>
+            </div>
+            <p class="product-name">Gold Medal All Purpose Flour</p>
+            <p class="product-size">3 lbs</p>
+          </div>
+          <button class="add-product-btn" aria-label="Add to cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="product-card">
+          <img class="product-img" src="https://www.figma.com/api/mcp/asset/d255616c-f22b-40ac-a31a-d28dae391187" alt="Mary's Chicken" />
+          <div class="product-info">
+            <div class="product-price-row">
+              <span class="price-badge">$3.99</span>
+              <span class="price-slash">$4.99</span>
+            </div>
+            <p class="product-name">Mary's Chicken Heirloom, Pasture Raised Slow growth</p>
+            <p class="product-size">12 oz</p>
+          </div>
+          <button class="add-product-btn" aria-label="Add to cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="product-card">
+          <img class="product-img" src="https://www.figma.com/api/mcp/asset/5e4b993c-7338-43eb-b233-ff7f239b6b31" alt="Hass Avocados" />
+          <div class="product-info">
+            <div class="product-price-row">
+              <span class="price-badge">$3.99</span>
+              <span class="price-slash">$4.99</span>
+            </div>
+            <p class="product-name">Hass Avocados Bag - 6 ct</p>
+          </div>
+          <button class="add-product-btn" aria-label="Add to cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="product-card">
+          <img class="product-img" src="https://www.figma.com/api/mcp/asset/189edaa7-7bcf-4a02-b4bf-b3b7a7bc0d0d" alt="Almond Butter" />
+          <div class="product-info">
+            <div class="product-price-row">
+              <span class="price-badge">$3.99</span>
+              <span class="price-slash">$4.99</span>
+            </div>
+            <p class="product-name">Sam's Choice Creamy Almond Butter</p>
+            <p class="product-size">12 oz</p>
+          </div>
+          <button class="add-product-btn" aria-label="Add to cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="product-card">
+          <img class="product-img" src="https://www.figma.com/api/mcp/asset/87e8f8af-667c-41b2-b2f9-863796e8027b" alt="Strawberries" />
+          <div class="product-info">
+            <div class="product-price-row">
+              <span class="price-badge">$3.99</span>
+              <span class="price-slash">$4.99</span>
+            </div>
+            <p class="product-name">Organic Fresh Strawberries</p>
+            <p class="product-size">1 lb</p>
+          </div>
+          <button class="add-product-btn" aria-label="Add to cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="product-card">
+          <img class="product-img" src="https://www.figma.com/api/mcp/asset/6001fba2-6592-487b-ac9f-44b765df8ae3" alt="Ruffles" />
+          <div class="product-info">
+            <div class="product-price-row">
+              <span class="price-badge">$3.99</span>
+              <span class="price-slash">$4.99</span>
+            </div>
+            <p class="product-name">Ruffles - Cheddar &amp; Sour Cream</p>
+            <p class="product-size">1.5 oz</p>
+          </div>
+          <button class="add-product-btn" aria-label="Add to cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="product-card">
+          <img class="product-img" src="https://www.figma.com/api/mcp/asset/8696f99d-a1da-4186-a350-f895e570a404" alt="Tate's Cookies" />
+          <div class="product-info">
+            <div class="product-price-row">
+              <span class="price-badge">$3.99</span>
+              <span class="price-slash">$4.99</span>
+            </div>
+            <p class="product-name">Tate's Bake Shop - Chocolate Chip Cookies</p>
+            <p class="product-size">12 oz</p>
+          </div>
+          <button class="add-product-btn" aria-label="Add to cart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- BOTTOM SHEET -->
+  <div class="sheet-overlay" id="sheetOverlay">
+    <div class="sheet-scrim" id="sheetScrim"></div>
+    <div class="sheet">
+      <div class="sheet-pull-bar"><div class="sheet-pull"></div></div>
+
+      <div class="sheet-header">
+        <span class="sheet-title" id="sheetTitle">Edit item</span>
+        <button class="sheet-close" id="sheetClose" aria-label="Close">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6l12 12" stroke="#242529" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sheet-input-row">
+        <input class="sheet-text-input" id="sheetInput" type="text" autocomplete="off" spellcheck="false" />
+        <div class="sheet-stepper">
+          <button class="stepper-btn" id="stepperMinus">−</button>
+          <span class="stepper-count" id="stepperCount">1</span>
+          <button class="stepper-btn" id="stepperPlus">+</button>
+        </div>
+        <div class="sheet-unit-wrapper">
+          <button class="sheet-unit" id="sheetUnitBtn">
+            <span id="sheetUnitLabel">ct</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="unit-dropdown" id="unitDropdown">
+            <button class="unit-dropdown-item selected" data-unit="ct">ct — count</button>
+            <button class="unit-dropdown-item" data-unit="each">each</button>
+            <button class="unit-dropdown-item" data-unit="pkg">pkg</button>
+            <button class="unit-dropdown-item" data-unit="bunch">bunch</button>
+            <div class="unit-dropdown-divider"></div>
+            <button class="unit-dropdown-item" data-unit="oz">oz — ounce</button>
+            <button class="unit-dropdown-item" data-unit="lbs">lbs — pound</button>
+            <button class="unit-dropdown-item" data-unit="g">g — gram</button>
+            <button class="unit-dropdown-item" data-unit="kg">kg — kilogram</button>
+            <div class="unit-dropdown-divider"></div>
+            <button class="unit-dropdown-item" data-unit="fl oz">fl oz</button>
+            <button class="unit-dropdown-item" data-unit="ml">ml</button>
+            <button class="unit-dropdown-item" data-unit="L">L — liter</button>
+            <div class="unit-dropdown-divider"></div>
+            <button class="unit-dropdown-item" data-unit="cups">cups</button>
+            <button class="unit-dropdown-item" data-unit="tbsp">tbsp</button>
+            <button class="unit-dropdown-item" data-unit="tsp">tsp</button>
+          </div>
+        </div>
+        <button class="sheet-delete-btn" aria-label="Delete item">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sheet-suggestions" id="unitChips">
+        <button class="suggestion-chip selected" data-unit="ct">ct</button>
+        <button class="suggestion-chip" data-unit="each">each</button>
+        <button class="suggestion-chip" data-unit="pkg">pkg</button>
+        <button class="suggestion-chip" data-unit="bunch">bunch</button>
+        <button class="suggestion-chip" data-unit="oz">oz</button>
+        <button class="suggestion-chip" data-unit="lbs">lbs</button>
+        <button class="suggestion-chip" data-unit="g">g</button>
+        <button class="suggestion-chip" data-unit="kg">kg</button>
+        <button class="suggestion-chip" data-unit="fl oz">fl oz</button>
+        <button class="suggestion-chip" data-unit="ml">ml</button>
+        <button class="suggestion-chip" data-unit="L">L</button>
+        <button class="suggestion-chip" data-unit="cups">cups</button>
+        <button class="suggestion-chip" data-unit="tbsp">tbsp</button>
+        <button class="suggestion-chip" data-unit="tsp">tsp</button>
+      </div>
+
+      <div class="sheet-keyboard">
+        <!-- QWERTY -->
+        <div class="kbd-qwerty">
+          <div class="kbd-row kbd-row-1">
+            <button class="kbd-key" data-char="q">q</button>
+            <button class="kbd-key" data-char="w">w</button>
+            <button class="kbd-key" data-char="e">e</button>
+            <button class="kbd-key" data-char="r">r</button>
+            <button class="kbd-key" data-char="t">t</button>
+            <button class="kbd-key" data-char="y">y</button>
+            <button class="kbd-key" data-char="u">u</button>
+            <button class="kbd-key" data-char="i">i</button>
+            <button class="kbd-key" data-char="o">o</button>
+            <button class="kbd-key" data-char="p">p</button>
+            <button class="kbd-key backspace" id="kbdBackspace">
+              <svg width="26" height="20" viewBox="0 0 26 20" fill="none">
+                <path d="M10 1H24a1 1 0 011 1v16a1 1 0 01-1 1H10L1 10l9-9z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M16 7l6 6M22 7l-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="kbd-row kbd-row-2">
+            <button class="kbd-key" data-char="a">a</button>
+            <button class="kbd-key" data-char="s">s</button>
+            <button class="kbd-key" data-char="d">d</button>
+            <button class="kbd-key" data-char="f">f</button>
+            <button class="kbd-key" data-char="g">g</button>
+            <button class="kbd-key" data-char="h">h</button>
+            <button class="kbd-key" data-char="j">j</button>
+            <button class="kbd-key" data-char="k">k</button>
+            <button class="kbd-key" data-char="l">l</button>
+          </div>
+          <div class="kbd-row kbd-row-3">
+            <button class="kbd-key" data-char="z">z</button>
+            <button class="kbd-key" data-char="x">x</button>
+            <button class="kbd-key" data-char="c">c</button>
+            <button class="kbd-key" data-char="v">v</button>
+            <button class="kbd-key" data-char="b">b</button>
+            <button class="kbd-key" data-char="n">n</button>
+            <button class="kbd-key" data-char="m">m</button>
+          </div>
+          <div class="kbd-row-space">
+            <button class="kbd-space" data-char=" ">space</button>
+            <button class="kbd-save" id="kbdSave">Save</button>
+          </div>
+        </div>
+
+        <!-- Dismiss -->
+        <div class="kbd-dismiss-col">
+          <button class="kbd-dismiss" id="kbdDismiss" aria-label="Dismiss keyboard">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12l7 7 7-7" stroke="#242529" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Numpad -->
+        <div class="kbd-numpad">
+          <button class="kbd-num" data-char="1">1</button>
+          <button class="kbd-num" data-char="2">2</button>
+          <button class="kbd-num" data-char="3">3</button>
+          <button class="kbd-num" data-char="4">4</button>
+          <button class="kbd-num" data-char="5">5</button>
+          <button class="kbd-num" data-char="6">6</button>
+          <button class="kbd-num" data-char="7">7</button>
+          <button class="kbd-num" data-char="8">8</button>
+          <button class="kbd-num" data-char="9">9</button>
+          <button class="kbd-num zero" data-char="0">0</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  </div><!-- /.tablet-screen -->
+  </div><!-- /.tablet-frame -->
+
+  <script>
+    const overlay   = document.getElementById('sheetOverlay');
+    const scrim     = document.getElementById('sheetScrim');
+    const sheetTitle = document.getElementById('sheetTitle');
+    const input     = document.getElementById('sheetInput');
+    const closeBtn  = document.getElementById('sheetClose');
+    const minusBtn  = document.getElementById('stepperMinus');
+    const plusBtn   = document.getElementById('stepperPlus');
+    const countEl   = document.getElementById('stepperCount');
+    const saveBtn   = document.getElementById('kbdSave');
+    const backspace = document.getElementById('kbdBackspace');
+    const dismiss   = document.getElementById('kbdDismiss');
+
+    let qty = 1;
+
+    function openSheet(title, prefill) {
+      sheetTitle.textContent = title;
+      input.value = prefill;
+      qty = 1;
+      countEl.textContent = qty;
+      overlay.classList.add('open');
+      // move cursor to end
+      setTimeout(() => { input.setSelectionRange(input.value.length, input.value.length); }, 50);
+    }
+
+    function closeSheet() {
+      overlay.classList.remove('open');
+    }
+
+    // Close triggers
+    closeBtn.addEventListener('click', closeSheet);
+    scrim.addEventListener('click', closeSheet);
+    saveBtn.addEventListener('click', closeSheet);
+    dismiss.addEventListener('click', closeSheet);
+
+    // Stepper
+    minusBtn.addEventListener('click', () => { if (qty > 1) countEl.textContent = --qty; });
+    plusBtn.addEventListener('click',  () => { countEl.textContent = ++qty; });
+
+    // Unit selector — chips + dropdown in sync
+    const unitBtn      = document.getElementById('sheetUnitBtn');
+    const unitDropdown = document.getElementById('unitDropdown');
+
+    const sheet = document.querySelector('.sheet');
+
+    function selectUnit(unit) {
+      document.getElementById('sheetUnitLabel').textContent = unit;
+      document.querySelectorAll('#unitChips .suggestion-chip').forEach(c => {
+        c.classList.toggle('selected', c.dataset.unit === unit);
+      });
+      unitDropdown.querySelectorAll('.unit-dropdown-item').forEach(i => {
+        i.classList.toggle('selected', i.dataset.unit === unit);
+      });
+    }
+
+    function closeUnitPicker() {
+      sheet.classList.remove('unit-picker-open');
+      unitDropdown.classList.remove('open');
+    }
+
+    // Chip clicks — select unit and close picker
+    document.querySelectorAll('#unitChips .suggestion-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        selectUnit(chip.dataset.unit);
+        closeUnitPicker();
+      });
+    });
+
+    // Unit button — toggle chip bar
+    unitBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sheet.classList.toggle('unit-picker-open');
+    });
+
+    // Dropdown item clicks
+    unitDropdown.querySelectorAll('.unit-dropdown-item').forEach(item => {
+      item.addEventListener('click', () => {
+        selectUnit(item.dataset.unit);
+        closeUnitPicker();
+      });
+    });
+
+    document.getElementById('sheetOverlay').addEventListener('click', closeUnitPicker);
+
+    // Keyboard key presses
+    document.querySelectorAll('.kbd-key[data-char], .kbd-num[data-char]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        input.value += btn.dataset.char;
+      });
+    });
+
+    backspace.addEventListener('click', () => {
+      input.value = input.value.slice(0, -1);
+    });
+
+    // Wire up all edit (pencil) buttons
+    document.querySelectorAll('.list-item__edit').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const name = btn.closest('.list-item').querySelector('.list-item__name').textContent.trim();
+        openSheet('Edit item', name);
+      });
+    });
+
+    // Wire up Add button
+    document.querySelector('.add-btn').addEventListener('click', () => {
+      openSheet('Add item', '');
+    });
+
+    // ── Staples FLIP animation ──────────────────────────────────────────────
+    const FLIP_DUR = 360;
+
+    function makeFlipClone(src, rect, circular) {
+      const el = document.createElement('img');
+      el.src = src;
+      Object.assign(el.style, {
+        position: 'fixed',
+        left: rect.left + 'px', top: rect.top + 'px',
+        width: rect.width + 'px', height: rect.height + 'px',
+        borderRadius: circular ? '50%' : '12px',
+        objectFit: 'contain',
+        border: '1px solid #e8e9eb',
+        background: '#f6f7f8',
+        padding: '4px',
+        boxSizing: 'border-box',
+        pointerEvents: 'none',
+        zIndex: '9999',
+      });
+      document.body.appendChild(el);
+      return el;
+    }
+
+    function staplesExpand() {
+      const wrapper = document.getElementById('staplesWrapper');
+      const clusterEls = wrapper.querySelectorAll('.staples-img, .staples-img-more');
+      // Snapshot cluster rects BEFORE expanding
+      const fromRects = [...clusterEls].map(el => el.getBoundingClientRect());
+      const srcs = [
+        clusterEls[0].src,
+        clusterEls[1].src,
+        clusterEls[2].querySelector('img').src,
+      ];
+
+      // Expand + hide cluster
+      wrapper.classList.add('expanded');
+      clusterEls.forEach(el => { el.style.opacity = '0'; });
+
+      // Snapshot match image target rects (now in expanded DOM)
+      const matchCards = [...wrapper.querySelectorAll('.match-card')];
+      const first3Imgs = matchCards.slice(0, 3).map(c => c.querySelector('.match-img'));
+      const toRects = first3Imgs.map(img => img.getBoundingClientRect());
+
+      // FLIP: fly each cluster circle to its match card image position
+      [0, 1, 2].forEach(i => {
+        const delay = i * 50;
+        const clone = makeFlipClone(srcs[i], fromRects[i], true);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const t = `${FLIP_DUR}ms cubic-bezier(0.4,0,0.2,1) ${delay}ms`;
+          Object.assign(clone.style, {
+            transition: `left ${t}, top ${t}, width ${t}, height ${t}, border-radius ${t}`,
+            left: toRects[i].left + 'px', top: toRects[i].top + 'px',
+            width: toRects[i].width + 'px', height: toRects[i].height + 'px',
+            borderRadius: '12px',
+          });
+        }));
+        setTimeout(() => {
+          first3Imgs[i].style.opacity = '1';
+          matchCards[i].style.opacity = '1';
+          clone.remove();
+        }, FLIP_DUR + delay + 20);
+      });
+
+      // Cards 4–6: stagger fade-in
+      matchCards.slice(3).forEach((card, i) => {
+        setTimeout(() => { card.style.opacity = '1'; }, 80 + i * 60);
+      });
+    }
+
+    function staplesCollapse() {
+      const wrapper = document.getElementById('staplesWrapper');
+      const clusterEls = wrapper.querySelectorAll('.staples-img, .staples-img-more');
+      const matchCards = [...wrapper.querySelectorAll('.match-card')];
+      const first3Imgs = matchCards.slice(0, 3).map(c => c.querySelector('.match-img'));
+
+      // Snapshot match rects BEFORE collapsing
+      const fromRects = first3Imgs.map(img => img.getBoundingClientRect());
+      // Use cluster srcs for the return journey (visual continuity)
+      const srcs = [
+        clusterEls[0].src,
+        clusterEls[1].src,
+        clusterEls[2].querySelector('img').src,
+      ];
+
+      // Hide everything; collapse container
+      matchCards.forEach(c => { c.style.opacity = '0'; });
+      first3Imgs.forEach(img => { img.style.opacity = '0'; });
+      wrapper.classList.remove('expanded');
+
+      // Cluster rects (header position unchanged during collapse)
+      const toRects = [...clusterEls].map(el => el.getBoundingClientRect());
+
+      // FLIP: fly each match image back to cluster position
+      [0, 1, 2].forEach(i => {
+        const delay = i * 40;
+        const clone = makeFlipClone(srcs[i], fromRects[i], false);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const t = `${FLIP_DUR}ms cubic-bezier(0.4,0,0.2,1) ${delay}ms`;
+          Object.assign(clone.style, {
+            transition: `left ${t}, top ${t}, width ${t}, height ${t}, border-radius ${t}`,
+            left: toRects[i].left + 'px', top: toRects[i].top + 'px',
+            width: toRects[i].width + 'px', height: toRects[i].height + 'px',
+            borderRadius: '50%',
+          });
+        }));
+        setTimeout(() => {
+          clusterEls[i].style.opacity = '1';
+          clone.remove();
+        }, FLIP_DUR + delay + 20);
+      });
+    }
+
+    document.getElementById('staplesCard').addEventListener('click', (e) => {
+      if (e.target.closest('.update-list-btn')) return;
+      const wrapper = document.getElementById('staplesWrapper');
+      wrapper.classList.contains('expanded') ? staplesCollapse() : staplesExpand();
+    });
+
+    // ── Update list: inject product match sub-cards ──────────────────────────
+    const MATCH_DATA = [
+      { listKey: 'milk',        img: 'Documents/Caper/features/list_import_review_items/assets/horizon_organic_milk.jpg', price: '$3.99', was: '$4.99', name: 'Horizon Organic Milk',               size: '1 gal'  },
+      { listKey: 'fage yogurt', img: 'https://www.figma.com/api/mcp/asset/8182e1ee-32ce-4bbc-86d6-0ce096046a40', price: '$5.49', was: '$6.99', name: 'Fage Total 0% Yogurt',              size: '32 oz'  },
+      { listKey: 'tea',         img: 'https://www.figma.com/api/mcp/asset/abdd8f46-0119-4b84-8c12-24de1a8c5d23', price: '$4.29', was: '$5.49', name: 'Twinings English Breakfast Tea Bags', size: '50 ct'  },
+      { listKey: null, newItem: 'butter', img: 'Documents/Caper/features/list_import_review_items/assets/kerrygold_butter.jpg', price: '$6.99', was: '$8.49', name: 'Kerrygold Pure Irish Butter', size: '8 oz'   },
+      { listKey: null, newItem: 'eggs',   img: 'Documents/Caper/features/list_import_review_items/assets/vital_farms_pasture_raised_eggs.jpg', price: '$5.99', was: '$7.29', name: 'Vital Farms Pasture-Raised Eggs', size: '12 ct' },
+      { listKey: 'bread',       img: 'Documents/Caper/features/list_import_review_items/assets/daves_killer_bread.jpg', price: '$5.49', was: '$6.99', name: "Dave's Killer Bread, 21 Whole Grains", size: '27 oz' },
+    ];
+
+    const EDIT_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#56595e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const CHECK_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#108910" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    // ── Toast ──────────────────────────────────────────────────────────────
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>${msg}`;
+      el.classList.add('visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('visible'), 2400);
+    }
+
+    function buildMatchSubCard(m) {
+      return `<div class="list-item__match">
+        <button class="match-checkbox" aria-label="Toggle match">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <rect class="cb-box" x="2" y="2" width="28" height="28" rx="6"/>
+            <path class="cb-check" d="M9 16.5L13.5 21L23 11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <img class="list-item__product-img" src="${m.img}" alt="${m.name}" />
+        <div class="list-item__text">
+          <span class="list-item__name">${m.name}</span>
+          <span class="list-item__qty">${m.size}</span>
+        </div>
+      </div>`;
+    }
+
+    function findListItem(listKey) {
+      for (const item of document.querySelectorAll('.list-item')) {
+        const nameEl = item.querySelector('.list-item__name');
+        if (nameEl && nameEl.textContent.trim().toLowerCase() === listKey.toLowerCase()) return item;
+      }
+      return null;
+    }
+
+    function updateListCount() {
+      const el = document.querySelector('.left-panel__count');
+      const n = parseInt(el.textContent) + 1;
+      el.textContent = `${n} item${n !== 1 ? 's' : ''}`;
+    }
+
+    function addNewListItem(name) {
+      const list = document.querySelector('.left-panel__list');
+      const div = document.createElement('div');
+      div.className = 'list-item';
+      div.innerHTML = `<div class="list-item__left"><span class="list-item__name">${name}</span></div><button class="list-item__edit" aria-label="Edit">${EDIT_SVG}</button>`;
+      div.querySelector('.list-item__edit').addEventListener('click', () => openSheet('Edit item', name));
+      list.append(div);
+      return div;
+    }
+
+    function applyMatch(m, updateBtn) {
+      let item = m.listKey ? findListItem(m.listKey) : null;
+      if (!item && m.newItem) item = addNewListItem(m.newItem);
+      if (!item) return;
+      if (item.querySelector('.list-item__match')) return; // idempotent
+      item.classList.add('list-item--matched');
+      item.insertAdjacentHTML('beforeend', buildMatchSubCard(m));
+      item.querySelector('.match-checkbox').addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.currentTarget.classList.toggle('unchecked');
+      });
+      if (updateBtn) {
+        updateBtn.classList.add('updated');
+        updateBtn.innerHTML = `${CHECK_SVG} Updated`;
+      }
+    }
+
+    // Per-row "Update list" buttons inside expanded staples
+    document.querySelectorAll('.match-update-btn').forEach((btn, i) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyMatch(MATCH_DATA[i], btn);
+        showToast('List updated');
+      });
+    });
+
+    // ── Tablet auto-scale ──────────────────────────────────────────────────
+    (function scaleTablet() {
+      const FRAME_W = 1280 + 36; // screen + 2×18px bezel
+      const FRAME_H = 780  + 36;
+      const PAD = 48;
+      const frame = document.querySelector('.tablet-frame');
+      function fit() {
+        const s = Math.min(
+          (window.innerWidth  - PAD) / FRAME_W,
+          (window.innerHeight - PAD) / FRAME_H,
+          1
+        );
+        frame.style.transform = `scale(${s})`;
+        frame.style.transformOrigin = 'center center';
+      }
+      fit();
+      window.addEventListener('resize', fit);
+    })();
+
+    // ── Add/remove forgotten products (toggle) ────────────────────────────
+    const PLUS_SVG  = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"></path></svg>`;
+    const CHECK_WHITE_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const cardListItems = new WeakMap();
+
+    function animateListItemIn(div) {
+      const list = document.querySelector('.left-panel__list');
+      list.prepend(div);
+      const h = div.getBoundingClientRect().height;
+      div.style.cssText = 'height:0;min-height:0;overflow:hidden;opacity:0;padding-top:0;padding-bottom:0;';
+      div.getBoundingClientRect();
+      div.style.transition = 'height 300ms cubic-bezier(0.4,0,0.2,1), padding 300ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease 80ms';
+      div.style.height = h + 'px';
+      div.style.paddingTop = '8px';
+      div.style.paddingBottom = '8px';
+      div.style.opacity = '1';
+      setTimeout(() => { div.style.cssText = ''; }, 320);
+      list.scrollTop = 0;
+    }
+
+    function animateListItemOut(div, onDone) {
+      const h = div.getBoundingClientRect().height;
+      div.style.height = h + 'px';
+      div.style.overflow = 'hidden';
+      div.getBoundingClientRect();
+      div.style.transition = 'height 280ms cubic-bezier(0.4,0,0.2,1), padding 280ms cubic-bezier(0.4,0,0.2,1), opacity 180ms ease';
+      div.style.height = '0';
+      div.style.paddingTop = '0';
+      div.style.paddingBottom = '0';
+      div.style.opacity = '0';
+      setTimeout(() => { div.remove(); onDone && onDone(); }, 290);
+    }
+
+    function toggleCard(card) {
+      const btn  = card.querySelector('.add-product-btn');
+      const name = card.querySelector('.product-name').textContent.trim();
+      const img  = card.querySelector('.product-img').src;
+      const size = card.querySelector('.product-size')?.textContent.trim() || '';
+
+      if (cardListItems.has(card)) {
+        const div = cardListItems.get(card);
+        cardListItems.delete(card);
+        card.classList.remove('added');
+        btn.innerHTML = PLUS_SVG;
+        const countEl = document.querySelector('.left-panel__count');
+        const n = parseInt(countEl.textContent) - 1;
+        countEl.textContent = `${n} item${n !== 1 ? 's' : ''}`;
+        animateListItemOut(div);
+        showToast(`${name} removed from list`);
+      } else {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = `
+          <div class="list-item__left">
+            <img class="list-item__product-img" src="${img}" alt="${name}" />
+            <div class="list-item__text">
+              <span class="list-item__name">${name}</span>
+              <span class="list-item__qty">${size}</span>
+            </div>
+          </div>
+          <button class="list-item__edit" aria-label="Edit">${EDIT_SVG}</button>`;
+        div.querySelector('.list-item__edit').addEventListener('click', () => openSheet('Edit item', name));
+        animateListItemIn(div);
+        updateListCount();
+        card.classList.add('added');
+        btn.innerHTML = CHECK_WHITE_SVG;
+        cardListItems.set(card, div);
+        showToast(`${name} added to list`);
+      }
+    }
+
+    document.querySelectorAll('.product-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.add-product-btn')) return;
+        toggleCard(card);
+      });
+      card.querySelector('.add-product-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleCard(card);
+      });
+    });
+
+    // Top-level "Update list" button — applies all 6 at once
+    const updateListBtn = document.querySelector('.update-list-btn');
+    updateListBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const btns = document.querySelectorAll('.match-update-btn');
+      MATCH_DATA.forEach((m, i) => applyMatch(m, btns[i]));
+      updateListBtn.classList.add('updated');
+      updateListBtn.innerHTML = `${CHECK_SVG} Updated`;
+      document.querySelector('.left-panel__list').scrollTop = 0;
+      showToast('List updated with matches');
+    });
+  </script>
+
+</body>
+</html>
