@@ -1938,6 +1938,7 @@
     function staplesExpand() {
       const wrapper = document.getElementById('staplesWrapper');
       const tablet = document.querySelector('.tablet-screen');
+      document.querySelector('.right-panel .section-title:first-child').textContent = 'Your staples, pre-matched';
       const clusterEls = wrapper.querySelectorAll('.staples-img, .staples-img-more');
 
       // Snapshot cluster rects and sources BEFORE expanding
@@ -2033,9 +2034,10 @@
         }, FLIP_DUR + delay + 20);
       });
 
-      // Collapse container after images have landed
+      // Collapse container after images have landed, revert sticky title
       setTimeout(() => {
         wrapper.classList.remove('expanded');
+        document.querySelector('.right-panel .section-title:first-child').textContent = 'Things you might have forgotten';
       }, FLIP_DUR + maxDelay + 20);
     }
 
