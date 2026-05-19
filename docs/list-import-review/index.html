@@ -1915,11 +1915,14 @@
     const FLIP_DUR = 360;
 
     function makeFlipClone(src, rect, circular) {
+      const tablet = document.querySelector('.tablet-screen');
+      const tabletRect = tablet.getBoundingClientRect();
       const el = document.createElement('img');
       el.src = src;
       Object.assign(el.style, {
-        position: 'fixed',
-        left: rect.left + 'px', top: rect.top + 'px',
+        position: 'absolute',
+        left: (rect.left - tabletRect.left) + 'px',
+        top: (rect.top - tabletRect.top) + 'px',
         width: rect.width + 'px', height: rect.height + 'px',
         borderRadius: circular ? '50%' : '12px',
         objectFit: 'contain',
@@ -1930,14 +1933,16 @@
         pointerEvents: 'none',
         zIndex: '9999',
       });
-      document.body.appendChild(el);
+      tablet.appendChild(el);
       return el;
     }
 
     function staplesExpand() {
       const wrapper = document.getElementById('staplesWrapper');
+      const tablet = document.querySelector('.tablet-screen');
       const clusterEls = wrapper.querySelectorAll('.staples-img, .staples-img-more');
-      // Snapshot cluster rects BEFORE expanding
+
+      // Snapshot cluster rects and sources BEFORE expanding
       const fromRects = [...clusterEls].map(el => el.getBoundingClientRect());
       const srcs = [
         clusterEls[0].src,
@@ -1945,65 +1950,70 @@
         clusterEls[2].querySelector('img').src,
       ];
 
-      // Expand + hide cluster
-      wrapper.classList.add('expanded');
+      // Hide cluster images, expand container first
       clusterEls.forEach(el => { el.style.opacity = '0'; });
+      wrapper.classList.add('expanded');
 
-      // Snapshot match image target rects (now in expanded DOM)
       const matchCards = [...wrapper.querySelectorAll('.match-card')];
       const first3Imgs = matchCards.slice(0, 3).map(c => c.querySelector('.match-img'));
-      const toRects = first3Imgs.map(img => img.getBoundingClientRect());
+      first3Imgs.forEach(img => { img.style.opacity = '0'; });
+      matchCards.forEach(c => { c.style.opacity = '0'; });
 
-      // FLIP: fly each cluster circle to its match card image position
-      [0, 1, 2].forEach(i => {
-        const delay = i * 50;
-        const clone = makeFlipClone(srcs[i], fromRects[i], true);
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          const t = `${FLIP_DUR}ms cubic-bezier(0.4,0,0.2,1) ${delay}ms`;
-          Object.assign(clone.style, {
-            transition: `left ${t}, top ${t}, width ${t}, height ${t}, border-radius ${t}`,
-            left: toRects[i].left + 'px', top: toRects[i].top + 'px',
-            width: toRects[i].width + 'px', height: toRects[i].height + 'px',
-            borderRadius: '12px',
-          });
-        }));
-        setTimeout(() => {
-          first3Imgs[i].style.opacity = '1';
-          matchCards[i].style.opacity = '1';
-          clone.remove();
-        }, FLIP_DUR + delay + 20);
-      });
+      // Wait for container expansion to finish, then fly images
+      setTimeout(() => {
+        const tabletRect = tablet.getBoundingClientRect();
+        const toRects = first3Imgs.map(img => img.getBoundingClientRect());
 
-      // Cards 4–6: stagger fade-in
-      matchCards.slice(3).forEach((card, i) => {
-        setTimeout(() => { card.style.opacity = '1'; }, 80 + i * 60);
-      });
+        [0, 1, 2].forEach(i => {
+          const delay = i * 50;
+          const clone = makeFlipClone(srcs[i], fromRects[i], true);
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            const t = `${FLIP_DUR}ms cubic-bezier(0.4,0,0.2,1) ${delay}ms`;
+            Object.assign(clone.style, {
+              transition: `left ${t}, top ${t}, width ${t}, height ${t}, border-radius ${t}`,
+              left: (toRects[i].left - tabletRect.left) + 'px',
+              top: (toRects[i].top - tabletRect.top) + 'px',
+              width: toRects[i].width + 'px', height: toRects[i].height + 'px',
+              borderRadius: '12px',
+            });
+          }));
+          setTimeout(() => {
+            first3Imgs[i].style.opacity = '1';
+            matchCards[i].style.opacity = '1';
+            clone.remove();
+          }, FLIP_DUR + delay + 20);
+        });
+
+        // Cards 4–6: stagger fade-in
+        matchCards.slice(3).forEach((card, i) => {
+          setTimeout(() => { card.style.opacity = '1'; }, 80 + i * 60);
+        });
+      }, 380);
     }
 
     function staplesCollapse() {
       const wrapper = document.getElementById('staplesWrapper');
+      const tablet = document.querySelector('.tablet-screen');
+      const tabletRect = tablet.getBoundingClientRect();
       const clusterEls = wrapper.querySelectorAll('.staples-img, .staples-img-more');
       const matchCards = [...wrapper.querySelectorAll('.match-card')];
       const first3Imgs = matchCards.slice(0, 3).map(c => c.querySelector('.match-img'));
 
-      // Snapshot match rects BEFORE collapsing
+      // Snapshot rects BEFORE any changes
       const fromRects = first3Imgs.map(img => img.getBoundingClientRect());
-      // Use cluster srcs for the return journey (visual continuity)
+      const toRects = [...clusterEls].map(el => el.getBoundingClientRect());
       const srcs = [
         clusterEls[0].src,
         clusterEls[1].src,
         clusterEls[2].querySelector('img').src,
       ];
 
-      // Hide everything; collapse container
+      // Hide match content
       matchCards.forEach(c => { c.style.opacity = '0'; });
       first3Imgs.forEach(img => { img.style.opacity = '0'; });
-      wrapper.classList.remove('expanded');
 
-      // Cluster rects (header position unchanged during collapse)
-      const toRects = [...clusterEls].map(el => el.getBoundingClientRect());
-
-      // FLIP: fly each match image back to cluster position
+      // Fly images back first
+      const maxDelay = 2 * 40;
       [0, 1, 2].forEach(i => {
         const delay = i * 40;
         const clone = makeFlipClone(srcs[i], fromRects[i], false);
@@ -2011,7 +2021,8 @@
           const t = `${FLIP_DUR}ms cubic-bezier(0.4,0,0.2,1) ${delay}ms`;
           Object.assign(clone.style, {
             transition: `left ${t}, top ${t}, width ${t}, height ${t}, border-radius ${t}`,
-            left: toRects[i].left + 'px', top: toRects[i].top + 'px',
+            left: (toRects[i].left - tabletRect.left) + 'px',
+            top: (toRects[i].top - tabletRect.top) + 'px',
             width: toRects[i].width + 'px', height: toRects[i].height + 'px',
             borderRadius: '50%',
           });
@@ -2021,6 +2032,11 @@
           clone.remove();
         }, FLIP_DUR + delay + 20);
       });
+
+      // Collapse container after images have landed
+      setTimeout(() => {
+        wrapper.classList.remove('expanded');
+      }, FLIP_DUR + maxDelay + 20);
     }
 
     document.getElementById('staplesCard').addEventListener('click', (e) => {
