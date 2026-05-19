@@ -1938,7 +1938,6 @@
     function staplesExpand() {
       const wrapper = document.getElementById('staplesWrapper');
       const tablet = document.querySelector('.tablet-screen');
-      document.querySelector('.right-panel .section-title:first-child').textContent = 'Your staples, pre-matched';
       const clusterEls = wrapper.querySelectorAll('.staples-img, .staples-img-more');
 
       // Snapshot cluster rects and sources BEFORE expanding
@@ -1960,6 +1959,7 @@
 
       // Wait for container expansion to finish, then fly images
       setTimeout(() => {
+        updateStickyTitle();
         const tabletRect = tablet.getBoundingClientRect();
         const scale = tabletRect.width / tablet.offsetWidth;
         const toRects = first3Imgs.map(img => img.getBoundingClientRect());
@@ -2034,12 +2034,28 @@
         }, FLIP_DUR + delay + 20);
       });
 
-      // Collapse container after images have landed, revert sticky title
+      // Collapse container after images have landed
       setTimeout(() => {
         wrapper.classList.remove('expanded');
-        document.querySelector('.right-panel .section-title:first-child').textContent = 'Things you might have forgotten';
+        updateStickyTitle();
       }, FLIP_DUR + maxDelay + 20);
     }
+
+    // ── Sticky title: tracks scroll position ──────────────────────────────
+    const rightPanel = document.querySelector('.right-panel');
+    const stickyTitle = document.querySelector('.right-panel .section-title:first-child');
+    const staplesTitle = document.querySelector('.right-panel .section-title:not(:first-child)');
+
+    function updateStickyTitle() {
+      const rpRect = rightPanel.getBoundingClientRect();
+      const stickyBottom = rpRect.top + stickyTitle.getBoundingClientRect().height;
+      const staplesTitleTop = staplesTitle.getBoundingClientRect().top;
+      stickyTitle.textContent = staplesTitleTop <= stickyBottom
+        ? 'Your staples, pre-matched'
+        : 'Things you might have forgotten';
+    }
+
+    rightPanel.addEventListener('scroll', updateStickyTitle);
 
     document.getElementById('staplesCard').addEventListener('click', (e) => {
       if (e.target.closest('.update-list-btn')) return;
