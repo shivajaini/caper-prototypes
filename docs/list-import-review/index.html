@@ -1917,13 +1917,14 @@
     function makeFlipClone(src, rect, circular) {
       const tablet = document.querySelector('.tablet-screen');
       const tabletRect = tablet.getBoundingClientRect();
+      const scale = tabletRect.width / tablet.offsetWidth;
       const el = document.createElement('img');
       el.src = src;
       Object.assign(el.style, {
         position: 'absolute',
-        left: (rect.left - tabletRect.left) + 'px',
-        top: (rect.top - tabletRect.top) + 'px',
-        width: rect.width + 'px', height: rect.height + 'px',
+        left: ((rect.left - tabletRect.left) / scale) + 'px',
+        top: ((rect.top - tabletRect.top) / scale) + 'px',
+        width: (rect.width / scale) + 'px', height: (rect.height / scale) + 'px',
         borderRadius: circular ? '50%' : '12px',
         objectFit: 'contain',
         border: '1px solid #e8e9eb',
@@ -1962,6 +1963,7 @@
       // Wait for container expansion to finish, then fly images
       setTimeout(() => {
         const tabletRect = tablet.getBoundingClientRect();
+        const scale = tabletRect.width / tablet.offsetWidth;
         const toRects = first3Imgs.map(img => img.getBoundingClientRect());
 
         [0, 1, 2].forEach(i => {
@@ -1971,9 +1973,9 @@
             const t = `${FLIP_DUR}ms cubic-bezier(0.4,0,0.2,1) ${delay}ms`;
             Object.assign(clone.style, {
               transition: `left ${t}, top ${t}, width ${t}, height ${t}, border-radius ${t}`,
-              left: (toRects[i].left - tabletRect.left) + 'px',
-              top: (toRects[i].top - tabletRect.top) + 'px',
-              width: toRects[i].width + 'px', height: toRects[i].height + 'px',
+              left: ((toRects[i].left - tabletRect.left) / scale) + 'px',
+              top: ((toRects[i].top - tabletRect.top) / scale) + 'px',
+              width: (toRects[i].width / scale) + 'px', height: (toRects[i].height / scale) + 'px',
               borderRadius: '12px',
             });
           }));
@@ -1995,6 +1997,7 @@
       const wrapper = document.getElementById('staplesWrapper');
       const tablet = document.querySelector('.tablet-screen');
       const tabletRect = tablet.getBoundingClientRect();
+      const scale = tabletRect.width / tablet.offsetWidth;
       const clusterEls = wrapper.querySelectorAll('.staples-img, .staples-img-more');
       const matchCards = [...wrapper.querySelectorAll('.match-card')];
       const first3Imgs = matchCards.slice(0, 3).map(c => c.querySelector('.match-img'));
@@ -2021,9 +2024,9 @@
           const t = `${FLIP_DUR}ms cubic-bezier(0.4,0,0.2,1) ${delay}ms`;
           Object.assign(clone.style, {
             transition: `left ${t}, top ${t}, width ${t}, height ${t}, border-radius ${t}`,
-            left: (toRects[i].left - tabletRect.left) + 'px',
-            top: (toRects[i].top - tabletRect.top) + 'px',
-            width: toRects[i].width + 'px', height: toRects[i].height + 'px',
+            left: ((toRects[i].left - tabletRect.left) / scale) + 'px',
+            top: ((toRects[i].top - tabletRect.top) / scale) + 'px',
+            width: (toRects[i].width / scale) + 'px', height: (toRects[i].height / scale) + 'px',
             borderRadius: '50%',
           });
         }));
